@@ -147,8 +147,15 @@ void draw() {
   midgroundFramebuffer.beginDraw();
   midgroundFramebuffer.background(0,0); //Refresh this buffer with pure 0% alpha
   midgroundFramebuffer.pushStyle();
-  midgroundFramebuffer.strokeWeight(4);
-  for (int pointIndex : hullExtrema) {
+  midgroundFramebuffer.noStroke();
+
+  PVector[] origins = new PVector[2];
+  origins[0] = leftOrigin;
+  origins[1] = rightOrigin;
+
+  PVector[][] intersections = new PVector[origins.length][hullExtrema.length];
+  for (int i = 0; i < hullExtrema.length; i++) {
+    int pointIndex = hullExtrema[i];
     Point point = points[pointIndex];
 
     //Determine what point the triangle should originate from
@@ -160,11 +167,8 @@ void draw() {
       origin = rightOrigin;
     }
     */
-    PVector[] origins = new PVector[2];
-    origins[0] = leftOrigin;
-    origins[1] = rightOrigin;
-
-    for (PVector origin : origins) {
+    for (int j = 0; j < origins.length; j++) {
+      PVector origin = origins[j];
 
       //Cast a ray from that point to the target
       Ray ray = new Ray();
@@ -176,13 +180,26 @@ void draw() {
       //println("ray: " + ray + " hit: " + hit + " dist: " + distance + " intersection: " + intersection);
       //stroke(0, 255, 0);
       //line(origin.x, origin.y, point.x, point.y);
-      midgroundFramebuffer.strokeWeight(2);
-      if(hit) {
-        midgroundFramebuffer.stroke(255, 0, 0);
-      } else {
-        midgroundFramebuffer.stroke(0, 0, 255);
-      }
-      midgroundFramebuffer.line(ray.origin.x, ray.origin.y, intersection.x, intersection.y);
+      intersections[j][i] = intersection;
+    }
+  }
+
+  for (int i = 0; i < intersections.length; i++) {
+    PVector origin = origins[i];
+    PVector[] intersectionsForOrigin  = intersections[i];
+    Arrays.sort(intersectionsForOrigin, pVectorYDescending);
+    for (int j = 0; j < (intersectionsForOrigin.length - 1); j++) {
+      PVector intersection = intersectionsForOrigin[j];
+      PVector lowerIntersection = intersectionsForOrigin[j+1];
+
+      float jRGB = map(j, 0, intersectionsForOrigin.length, 0, 32);
+      float frequency = 0.3;
+      float red   = sin(frequency*jRGB + 0) * 127 + 128;
+      float green = sin(frequency*jRGB + 2) * 127 + 128;
+      float blue  = sin(frequency*jRGB + 4) * 127 + 128;
+
+      midgroundFramebuffer.fill(red, green, blue); 
+      midgroundFramebuffer.triangle(origin.x, origin.y, intersection.x, intersection.y, lowerIntersection.x, lowerIntersection.y);
     }
   }
   midgroundFramebuffer.popStyle();
