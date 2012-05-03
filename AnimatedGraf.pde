@@ -7,17 +7,23 @@ MPolygon[] myRegions;
 MPolygon myHullRegion;
 float[][] foregroundPoints;
 float[][] myEdges;
+float pointMinX, pointMinY, pointMaxX, pointMaxY;
 
 void setup() {
-  size(800, 800);
+  size(1024, 800);
+
+  pointMinX = width / 4;
+  pointMinY = height / 4;
+  pointMaxX = width - (width / 4);
+  pointMaxY = height - (height / 4);
   
   int numPoints = 20;
   
   foregroundPoints = new float[20][2];
   			
   for (int i = 0; i < foregroundPoints.length; i++) {
-    foregroundPoints[i][0] = random(0, width); //point x
-    foregroundPoints[i][1] = random(0, height); //point y
+    foregroundPoints[i][0] = random(pointMinX, pointMaxX); //point x
+    foregroundPoints[i][1] = random(pointMinY, pointMaxY); //point y
   }
 }
 
@@ -26,8 +32,8 @@ void draw() {
   for (int i = 0; i < foregroundPoints.length; i++) {
     foregroundPoints[i][0] += random(-5, 5); //x
     foregroundPoints[i][1] += random(-5, 5); //y
-    foregroundPoints[i][0] = constrain(foregroundPoints[i][0], 0, width); //x
-    foregroundPoints[i][1] = constrain(foregroundPoints[i][1], 0, height); //y
+    foregroundPoints[i][0] = constrain(foregroundPoints[i][0], pointMinX, pointMaxX); //x
+    foregroundPoints[i][1] = constrain(foregroundPoints[i][1], pointMinY, pointMaxY); //y
   }
 
   //Calculate voronoi diagram
