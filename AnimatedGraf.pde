@@ -14,6 +14,7 @@ float pointMinX, pointMinY, pointMaxX, pointMaxY;
 PVector leftOrigin, rightOrigin;
 QMath qMath; //Fuck java
 PGraphics voronoiFramebuffer;
+PGraphics midgroundFramebuffer;
 PGraphics foregroundFramebuffer;
 
 PVectorYDescending pVectorYDescending;
@@ -27,6 +28,7 @@ void setup() {
   pointMaxY = height - (height / 4);
 
   voronoiFramebuffer = createGraphics(width, height, P2D);//createGraphics(width / 2, height / 2);
+  midgroundFramebuffer = createGraphics(width, height, P2D);
   foregroundFramebuffer = createGraphics(width, height, P2D);
   
   int numPoints = 20;
@@ -50,8 +52,19 @@ void setup() {
   //frameRate(30);
 }
 
+void drawRegions(PGraphics graphics, MPolygon[] regions, int strokeWeight, color strokeColor) {
+  for(MPolygon region : regions)
+  {
+    // an array of points
+    float[][] regionCoordinates = region.getCoords();
+    graphics.strokeWeight(strokeWeight);
+    graphics.stroke(strokeColor);
+    region.draw(graphics); 
+  }
+}
+
 void draw() {
-  //==============UPDATE================
+  //=============UPDATE===============//
   //Update point positions
   for (Point point : points) {
     point.x += random(-5, 5);
@@ -89,10 +102,13 @@ void draw() {
     points[pointIndex].isOnHull = true;
   }
   
-  //==============DRAW================
+  //==============DRAW================//
+
+
+  //===== voronoiFramebuffer draw ====//
+
   voronoiFramebuffer.beginDraw();
 
-  background(60);
   voronoiFramebuffer.background(0, 128, 255);
 
   //Draw delaunay edges
@@ -113,41 +129,25 @@ void draw() {
   //Draw voronoi regions
   voronoiFramebuffer.pushStyle();
   voronoiFramebuffer.noFill();
-  for(int i=0; i<myRegions.length; i++)
-  {
-  	// an array of points
-  	float[][] regionCoordinates = myRegions[i].getCoords();
-    voronoiFramebuffer.strokeWeight(16);
-    voronoiFramebuffer.stroke(0, 0, 0);
-  	myRegions[i].draw(voronoiFramebuffer); // draw this shape
-    voronoiFramebuffer.strokeWeight(8);
-    voronoiFramebuffer.stroke(255, 255, 255);
-  	myRegions[i].draw(voronoiFramebuffer); // draw this shape
-  }
+  voronoiFramebuffer.strokeJoin(BEVEL);
+  drawRegions(voronoiFramebuffer, myRegions, 16, color(0, 0, 0)); // draw black edge borders for edge lines
+  drawRegions(voronoiFramebuffer, myRegions, 8, color(255, 255, 255)); // draw white edge lines
   voronoiFramebuffer.popStyle();
   voronoiFramebuffer.endDraw();
 
-  //Draw convex hull texture from voronoi diagram framebuffer via OPENGL
-  pushStyle();
-  noStroke();
-  noFill();
-  beginShape();
-  texture(voronoiFramebuffer);
-  float[][] hullCoords = myHullRegion.getCoords();
-  for (int i = 0; i < hullCoords.length; i++) {
-    vertex(hullCoords[i][0], hullCoords[i][1], hullCoords[i][0], hullCoords[i][1]);
-  }
-  endShape();
-  popStyle();
 
-  foregroundFramebuffer.beginDraw();
+  //========== OPENGL draw ===========//
 
-  foregroundFramebuffer.background(0,0); //Refresh this buffer with pure 0% alpha
-  foregroundFramebuffer.stroke(255, 0, 0);
+  background(60);
+
+
+  //=== midgroundFramebuffer draw ====//
 
   //Draw side triangles
-  foregroundFramebuffer.pushStyle();
-  foregroundFramebuffer.strokeWeight(4);
+  midgroundFramebuffer.beginDraw();
+  midgroundFramebuffer.background(0,0); //Refresh this buffer with pure 0% alpha
+  midgroundFramebuffer.pushStyle();
+  midgroundFramebuffer.strokeWeight(4);
   for (int pointIndex : hullExtrema) {
     Point point = points[pointIndex];
 
@@ -173,19 +173,46 @@ void draw() {
       PVector intersection = new PVector();
       MutableFloat distance = new MutableFloat(0);
       boolean hit = qMath.RayCast(ray, myHullRegion, Float.MAX_VALUE, distance, intersection, null/*PVector normal*/);
-      println("ray: " + ray + " hit: " + hit + " dist: " + distance + " intersection: " + intersection);
+      //println("ray: " + ray + " hit: " + hit + " dist: " + distance + " intersection: " + intersection);
       //stroke(0, 255, 0);
       //line(origin.x, origin.y, point.x, point.y);
-      foregroundFramebuffer.strokeWeight(2);
+      midgroundFramebuffer.strokeWeight(2);
       if(hit) {
-        foregroundFramebuffer.stroke(255, 0, 0);
+        midgroundFramebuffer.stroke(255, 0, 0);
       } else {
-        foregroundFramebuffer.stroke(0, 0, 255);
+        midgroundFramebuffer.stroke(0, 0, 255);
       }
-      foregroundFramebuffer.line(ray.origin.x, ray.origin.y, intersection.x, intersection.y);
+      midgroundFramebuffer.line(ray.origin.x, ray.origin.y, intersection.x, intersection.y);
     }
   }
-  foregroundFramebuffer.popStyle();
+  midgroundFramebuffer.popStyle();
+  midgroundFramebuffer.endDraw();
+
+
+  //========== OPENGL draw ===========//
+
+  image(midgroundFramebuffer, 0, 0);
+
+  //Draw convex hull texture from voronoi diagram framebuffer
+  pushStyle();
+  noStroke();
+  noFill();
+  beginShape();
+  texture(voronoiFramebuffer);
+  float[][] hullCoords = myHullRegion.getCoords();
+  for (int i = 0; i < hullCoords.length; i++) {
+    vertex(hullCoords[i][0], hullCoords[i][1], hullCoords[i][0], hullCoords[i][1]);
+  }
+  endShape();
+  popStyle();
+
+
+  //=== foregroundFramebuffer draw ===//
+
+  foregroundFramebuffer.beginDraw();
+
+  foregroundFramebuffer.background(0,0); //Refresh this buffer with pure 0% alpha
+  foregroundFramebuffer.stroke(255, 0, 0);
 
   //Draw convex hull outline
   foregroundFramebuffer.pushStyle();
@@ -214,5 +241,8 @@ void draw() {
   popStyle();
   */
 
+
+  //========== OPENGL draw ===========//
+  //Finally, draw the foregroundFramebuffer to our native OPENGL PGraphics
   image(foregroundFramebuffer, 0, 0);
 }

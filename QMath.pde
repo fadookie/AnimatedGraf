@@ -51,9 +51,9 @@ class QMath {
         crossings++;  
         if (distance.get() < t.get() && distance.get() <= tmax) {  
           //Preserve object references for "out" parameters we're modifying
-          println("tPre: " + t + " hc: " + t.hashCode() + " ihc:" + System.identityHashCode(t));
+          //println("tPre: " + t + " hc: " + t.hashCode() + " ihc:" + System.identityHashCode(t));
           t.set(distance.get());
-          println("tPost: " + t + " hc: " + t.hashCode() + " ihc:" + System.identityHashCode(t));
+          //println("tPost: " + t + " hc: " + t.hashCode() + " ihc:" + System.identityHashCode(t));
           PVector ptTemp = ray.getPoint(t.getFloatValue());  
           pt.x = ptTemp.x;
           pt.y = ptTemp.y;
@@ -61,7 +61,7 @@ class QMath {
           PVector edge = PVector.sub(workVectorA, workVectorB);  
           // We would use LeftPerp() if the polygon was  
           // in clock wise order  
-          normal = RightPerp(edge);
+          normal = LeftPerp(edge);
           normal.normalize();
           //no reflection here
         }  
