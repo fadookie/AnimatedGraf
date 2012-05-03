@@ -13,16 +13,21 @@ int[] hullExtrema;
 float pointMinX, pointMinY, pointMaxX, pointMaxY;
 PVector leftOrigin, rightOrigin;
 QMath qMath; //Fuck java
+PGraphics voronoiFramebuffer;
+PGraphics foregroundFramebuffer;
 
 PVectorYDescending pVectorYDescending;
 
 void setup() {
-  size(1024, 800);
+  size(1024, 800, OPENGL);
 
   pointMinX = width / 4;
   pointMinY = height / 4;
   pointMaxX = width - (width / 4);
   pointMaxY = height - (height / 4);
+
+  voronoiFramebuffer = createGraphics(width, height, P2D);//createGraphics(width / 2, height / 2);
+  foregroundFramebuffer = createGraphics(width, height, P2D);
   
   int numPoints = 20;
   
@@ -85,13 +90,15 @@ void draw() {
   }
   
   //==============DRAW================
+  voronoiFramebuffer.beginDraw();
 
   background(color(0, 128, 255));
+  voronoiFramebuffer.background(color(0, 128, 255));
 
   //Draw delaunay edges
-  pushStyle();
-  stroke(color(32, 68, 95));
-  strokeWeight(8);
+  voronoiFramebuffer.pushStyle();
+  voronoiFramebuffer.stroke(color(32, 68, 95));
+  voronoiFramebuffer.strokeWeight(8);
 
   for(int i=0; i<myEdges.length; i++)
   {
@@ -99,29 +106,39 @@ void draw() {
   	float startY = myEdges[i][1];
   	float endX = myEdges[i][2];
   	float endY = myEdges[i][3];
-  	line( startX, startY, endX, endY );
+  	voronoiFramebuffer.line( startX, startY, endX, endY );
   }
-  popStyle();
+  voronoiFramebuffer.popStyle();
 
   //Draw voronoi regions
-  pushStyle();
-  noFill();
+  voronoiFramebuffer.pushStyle();
+  voronoiFramebuffer.noFill();
   for(int i=0; i<myRegions.length; i++)
   {
   	// an array of points
   	float[][] regionCoordinates = myRegions[i].getCoords();
-    strokeWeight(16);
-    stroke(color(0, 0, 0));
-  	myRegions[i].draw(this); // draw this shape
-    strokeWeight(8);
-    stroke(color(255, 255, 255));
-  	myRegions[i].draw(this); // draw this shape
+    voronoiFramebuffer.strokeWeight(16);
+    voronoiFramebuffer.stroke(color(0, 0, 0));
+  	myRegions[i].draw(voronoiFramebuffer); // draw this shape
+    voronoiFramebuffer.strokeWeight(8);
+    voronoiFramebuffer.stroke(color(255, 255, 255));
+  	myRegions[i].draw(voronoiFramebuffer); // draw this shape
   }
-  popStyle();
+  voronoiFramebuffer.popStyle();
+  voronoiFramebuffer.endDraw();
 
   stroke(color(255, 0, 0));
 
-  //Draw convex hull
+  //Draw convex hull texture from voronoi diagram framebuffer
+  beginShape();
+  texture(voronoiFramebuffer);
+  float[][] hullCoords = myHullRegion.getCoords();
+  for (int i = 0; i < hullCoords.length; i++) {
+    vertex(hullCoords[i][0], hullCoords[i][1], hullCoords[i][0], hullCoords[i][1]);
+  }
+  endShape();
+
+  //Draw convex hull outline
   pushStyle();
   noFill();
   strokeWeight(16);
@@ -147,7 +164,6 @@ void draw() {
       origin = rightOrigin;
     }
     */
-
     PVector[] origins = new PVector[2];
     origins[0] = leftOrigin;
     origins[1] = rightOrigin;
