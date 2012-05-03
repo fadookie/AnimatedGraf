@@ -11,6 +11,8 @@ float[][] floatPoints;
 float[][] myEdges;
 float pointMinX, pointMinY, pointMaxX, pointMaxY;
 
+PVectorYDescending pVectorYDescending;
+
 void setup() {
   size(1024, 800);
 
@@ -31,6 +33,7 @@ void setup() {
   }
 
   floatPoints = new float[points.length][2];
+  pVectorYDescending = new PVectorYDescending();
 }
 
 void draw() {
@@ -42,7 +45,8 @@ void draw() {
     point.y = constrain(point.y, pointMinY, pointMaxY);
   }
 
-  //TODO: Y sort
+  //Sort point positions by Y order, descending
+  Arrays.sort(points, pVectorYDescending);
 
   //Copy points data structure to floatPoints array for use by mesh library
   for (int i = 0; i < points.length; i++) {
@@ -112,12 +116,13 @@ void draw() {
   popStyle();
 
   //Draw origin points
-  /*
-  for (int i = 0; i < floatPoints.length; i++) {
-    float[] pointRow = floatPoints[i];
-    for (int j = 0; j < pointRow.length; j++) {
-      ellipse(pointRow[0], pointRow[1], 5, 5);
-    }
+  pushStyle();
+  noStroke();
+  int _color = 0;
+  for (PVector point : points) {
+    fill(0, _color, 0);
+    _color += 10;
+    ellipse(point.x, point.y, 10, 10);
   }
-  */
+  popStyle();
 }
