@@ -1,11 +1,11 @@
 //TODO: merge to QEngine
-static class QMath {
-  static float machineEpsilon;
+class QMath {
+  float machineEpsilon;
   /**
    * Approximate calculation of the machine epsilon
    * Adapted from http://en.wikipedia.org/wiki/Machine_epsilon#Approximation_using_Java
    */
-  static float getMachineEpsilonFloat() {
+  float getMachineEpsilonFloat() {
     float machEps = 0.0f;
 
     if (machineEpsilon == 0.0f) {
@@ -27,13 +27,14 @@ static class QMath {
    * @param PVector pt Out param
    * @param PVector normal Out param
    */
-  static boolean RayCast(Ray ray, MPolygon polygon, float tmax, Float t, PVector pt, PVector normal) {  
-    t = Float.MAX_VALUE;  
-    pt = ray.origin;  
+  boolean RayCast(Ray ray, MPolygon polygon, float tmax, MutableFloat t, PVector pt, PVector normal) {  
+    t.set(Float.MAX_VALUE);  
+    pt.x = ray.origin.x;  
+    pt.y = ray.origin.y;  
     normal = ray.direction;  
       
     // temp holder for segment distance  
-    Float distance = new Float(0);  
+    MutableFloat distance = new MutableFloat(0);  
     int crossings = 0;  
 
     //Some reusable PVectors to save on garbage creation
@@ -48,13 +49,14 @@ static class QMath {
       workVectorB.y = polyCoords[i][1];
       if (RayIntersectsSegment(ray, workVectorA, workVectorB, Float.MAX_VALUE, distance)) {  
         crossings++;  
-        if (distance < t && distance <= tmax) {  
-          t = distance;  
-          try {
-            pt = ray.getPoint(t);  
-          } catch (UnsupportedOperationException e) {
-            println(e.getMessage());
-          }
+        if (distance.get() < t.get() && distance.get() <= tmax) {  
+          //Preserve object references for "out" parameters we're modifying
+          println("tPre: " + t + " hc: " + t.hashCode() + " ihc:" + System.identityHashCode(t));
+          t.set(distance.get());
+          println("tPost: " + t + " hc: " + t.hashCode() + " ihc:" + System.identityHashCode(t));
+          PVector ptTemp = ray.getPoint(t.getFloatValue());  
+          pt.x = ptTemp.x;
+          pt.y = ptTemp.y;
 
           PVector edge = PVector.sub(workVectorA, workVectorB);  
           // We would use LeftPerp() if the polygon was  
@@ -71,29 +73,29 @@ static class QMath {
   /**
    * @param Float t Out param
    */
-  static boolean RayIntersectsSegment(Ray ray, PVector pt0, PVector pt1, float tmax, Float t) {  
+  boolean RayIntersectsSegment(Ray ray, PVector pt0, PVector pt1, float tmax, MutableFloat t) {  
     PVector seg = PVector.sub(pt1, pt0);  
     PVector segPerp = LeftPerp(seg);  
     float perpDotd = PVector.dot(ray.direction, segPerp);  
     //TODO: "Please note that Epsilon is rarely the most appropriate tolerance value, but what is varies widely depending on your units and scaling and I found it was sufficient towards understanding the algorithm itself."
     if (dist(perpDotd, 0, 0.0f, 0) < getMachineEpsilonFloat()) { //Check distance between perpDotd and 0 is less than epsilon value
-      t = Float.MAX_VALUE;  
+      t.set(Float.MAX_VALUE);  
       return false;  
     }  
   
     PVector d = PVector.sub(pt0, ray.origin);
   
-    t = PVector.dot(segPerp, d) / perpDotd; //TODO: could change this to instance .dot() for one less new object if safe
+    t.set(PVector.dot(segPerp, d) / perpDotd); //TODO: could change this to instance .dot() for one less new object if safe
     float s = LeftPerp(ray.direction).dot(d) / perpDotd;  
   
-    return t >= 0.0f && t <= tmax && s >= 0.0f && s <= 1.0f;  
+    return t.get() >= 0.0f && t.get() <= tmax && s >= 0.0f && s <= 1.0f;  
   }  
 
-  static PVector LeftPerp(PVector v) {  
+  PVector LeftPerp(PVector v) {  
     return new PVector(v.y, -v.x);  
   }  
   
-  static PVector RightPerp(PVector v) {  
+  PVector RightPerp(PVector v) {  
     return new PVector(-v.y, v.x);  
   }  
     

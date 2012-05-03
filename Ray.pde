@@ -1,8 +1,21 @@
 class Ray {
-  PVector direction;
-  PVector origin;
+  PVector direction = new PVector();
+  PVector origin = new PVector();
 
-  PVector getPoint(float t) throws UnsupportedOperationException {
-    throw new UnsupportedOperationException("what the fuck is this supposed to do?");
+  PVector getPoint(float t) {
+    return PVector.add(origin, PVector.mult(direction, t));
+  }
+
+  void setDirection(PVector newDirection) {
+    direction = newDirection;
+    direction.normalize();
+  }
+
+  void setOrigin(PVector newOrigin) {
+    origin = newOrigin;
+  }
+
+  String toString() {
+    return "Origin:" + origin + ", Direction: " + direction;
   }
 }
