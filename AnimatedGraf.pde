@@ -9,7 +9,9 @@ int numPoints = 20;
 Point[] points;
 float[][] floatPoints;
 float[][] myEdges;
+int[] hullExtrema;
 float pointMinX, pointMinY, pointMaxX, pointMaxY;
+PVector leftOrigin, rightOrigin;
 
 PVectorYDescending pVectorYDescending;
 
@@ -31,6 +33,9 @@ void setup() {
         random(pointMinY, pointMaxY)
     );
   }
+
+  leftOrigin = new PVector(0, height / 2);
+  rightOrigin = new PVector(width, height / 2);
 
   floatPoints = new float[points.length][2];
   pVectorYDescending = new PVectorYDescending();
@@ -68,7 +73,7 @@ void draw() {
   //Calculate convex hull
   myHull = new Hull( floatPoints ); 
   myHullRegion = myHull.getRegion();
-  int[] hullExtrema = myHull.getExtrema();
+  hullExtrema = myHull.getExtrema();
 
   //Flag Points on the hull as such
   for (int pointIndex : hullExtrema) {
@@ -121,6 +126,22 @@ void draw() {
   strokeWeight(8);
   stroke(color(255, 255, 255));
   myHullRegion.draw(this);
+  popStyle();
+
+  //Draw side triangles
+  pushStyle();
+  strokeWeight(4);
+  stroke(0, 255, 0);
+  for (int pointIndex : hullExtrema) {
+    Point point = points[pointIndex];
+    PVector origin;
+    if (point.x < width / 2) {
+      origin = leftOrigin;
+    } else {
+      origin = rightOrigin;
+    }
+    line(origin.x, origin.y, point.x, point.y);
+  }
   popStyle();
 
   //Draw origin points
