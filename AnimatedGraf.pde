@@ -6,7 +6,7 @@ Hull myHull;
 MPolygon[] myRegions;
 MPolygon myHullRegion;
 int numPoints = 20;
-PVector[] points;
+Point[] points;
 float[][] floatPoints;
 float[][] myEdges;
 float pointMinX, pointMinY, pointMaxX, pointMaxY;
@@ -24,9 +24,9 @@ void setup() {
   int numPoints = 20;
   
 
-  points = new PVector[numPoints];
+  points = new Point[numPoints];
   for (int i = 0; i < points.length; i++ ){
-    points[i] = new PVector(
+    points[i] = new Point(
         random(pointMinX, pointMaxX),
         random(pointMinY, pointMaxY)
     );
@@ -37,12 +37,14 @@ void setup() {
 }
 
 void draw() {
+  //==============UPDATE================
   //Update point positions
-  for (PVector point : points) {
+  for (Point point : points) {
     point.x += random(-5, 5);
     point.y += random(-5, 5);
     point.x = constrain(point.x, pointMinX, pointMaxX);
     point.y = constrain(point.y, pointMinY, pointMaxY);
+    point.isOnHull = false; //Assume we're not on the hull, if we are we'll get flagged later
   }
 
   //Sort point positions by Y order, descending
@@ -50,7 +52,7 @@ void draw() {
 
   //Copy points data structure to floatPoints array for use by mesh library
   for (int i = 0; i < points.length; i++) {
-    PVector point = points[i];
+    Point point = points[i];
     floatPoints[i][0] = point.x;
     floatPoints[i][1] = point.y;
   }
@@ -66,6 +68,12 @@ void draw() {
   //Calculate convex hull
   myHull = new Hull( floatPoints ); 
   myHullRegion = myHull.getRegion();
+  int[] hullExtrema = myHull.getExtrema();
+
+  //Flag Points on the hull as such
+  for (int pointIndex : hullExtrema) {
+    points[pointIndex].isOnHull = true;
+  }
   
   //==============DRAW================
 
@@ -119,10 +127,14 @@ void draw() {
   pushStyle();
   noStroke();
   int _color = 0;
-  for (PVector point : points) {
-    fill(0, _color, 0);
-    _color += 10;
+  for (Point point : points) {
+    if (point.isOnHull) {
+      fill(255, 0, 0);
+    } else {
+      fill(0, _color, 0);
+    }
     ellipse(point.x, point.y, 10, 10);
+    _color += 10;
   }
   popStyle();
 }
