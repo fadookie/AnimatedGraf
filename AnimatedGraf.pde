@@ -1,23 +1,32 @@
 import megamu.mesh.*;
 
+int numPoints = 20; //Number of source points
+float pointMinX, pointMinY, pointMaxX, pointMaxY; //Area in which source points can spawn and move
+Point[] points; //Data structure containing source points for all graphs
+float[][] floatPoints; //Data structure containing source points for all graphs in expected format by mesh lib
+
+PVector[] origins; //The points on the screen that will serve as origins for the side triangles
+PVector[][] intersections; //Where the rays cast from the origins to the hull points intersecting with the hull, indexed by origin
+PVector[][] oldIntersections; //The previous intersections array
+float lastTriangleDrawTimeMs;
+float triangleDrawDelayMs = 100;
+
 Voronoi myVoronoi;
 Delaunay myDelaunay;
 Hull myHull;
-MPolygon[] myRegions;
-MPolygon myHullRegion;
-int numPoints = 20;
-Point[] points;
-float[][] floatPoints;
-float[][] myEdges;
-int[] hullExtrema;
-float pointMinX, pointMinY, pointMaxX, pointMaxY;
-PVector leftOrigin, rightOrigin;
-QMath qMath; //Fuck java
+
+MPolygon[] myRegions; //MPolygon regions from the voronoi diagram
+MPolygon myHullRegion; //MPolygon of the convex hull
+float[][] myEdges; //Edges from delaunay diagram
+int[] hullExtrema; //Indices to points array of the points which lie on the convex hull
+
+PVectorYDescending pVectorYDescending; //Comparator for sorting arrays in descending order of PVector.y value
+QMath qMath; //Fuck java, I wanted this to be static
+
+//Frame buffers for compositing
 PGraphics voronoiFramebuffer;
 PGraphics midgroundFramebuffer;
 PGraphics foregroundFramebuffer;
-
-PVectorYDescending pVectorYDescending;
 
 void setup() {
   size(1024, 800, OPENGL);
@@ -42,14 +51,23 @@ void setup() {
     );
   }
 
-  leftOrigin = new PVector(0, height / 2);
-  rightOrigin = new PVector(width, height / 2);
+  origins = new PVector[2];
+  origins[0] =  new PVector(0, height / 2); //leftOrigin
+  origins[1] = new PVector(width, height / 2); //rightOrigin
+
+
+  lastTriangleDrawTimeMs = (-triangleDrawDelayMs) - 100; //Force triangles to draw immediately
+  oldIntersections = new PVector[origins.length][];
 
   floatPoints = new float[points.length][2];
   pVectorYDescending = new PVectorYDescending();
   qMath = new QMath();
 
-  //frameRate(30);
+  //Set up for first frame
+  update();
+  setupIntersections();
+
+  //frameRate(0.5);
 }
 
 void drawRegions(PGraphics graphics, MPolygon[] regions, int strokeWeight, color strokeColor) {
@@ -63,8 +81,41 @@ void drawRegions(PGraphics graphics, MPolygon[] regions, int strokeWeight, color
   }
 }
 
-void draw() {
-  //=============UPDATE===============//
+void setupIntersections() {
+  intersections = new PVector[origins.length][hullExtrema.length];
+
+  for (int i = 0; i < hullExtrema.length; i++) {
+    int pointIndex = hullExtrema[i];
+    Point point = points[pointIndex];
+
+    //Determine what point the triangle should originate from
+    /*
+    PVector origin;
+    if (point.x < width / 2) {
+      origin = leftOrigin;
+    } else {
+      origin = rightOrigin;
+    }
+    */
+    for (int j = 0; j < origins.length; j++) {
+      PVector origin = origins[j];
+
+      //Cast a ray from that point to the target
+      Ray ray = new Ray();
+      ray.setOrigin(origin);
+      ray.setDirection(PVector.sub(point, origin));
+      PVector intersection = new PVector();
+      MutableFloat distance = new MutableFloat(0);
+      boolean hit = qMath.RayCast(ray, myHullRegion, Float.MAX_VALUE, distance, intersection, null/*PVector normal*/);
+      //println("ray: " + ray + " hit: " + hit + " dist: " + distance + " intersection: " + intersection);
+      //stroke(0, 255, 0);
+      //line(origin.x, origin.y, point.x, point.y);
+      intersections[j][i] = intersection;
+    }
+  }
+}
+
+void update() {
   //Update point positions
   for (Point point : points) {
     point.x += random(-5, 5);
@@ -73,6 +124,12 @@ void draw() {
     point.y = constrain(point.y, pointMinY, pointMaxY);
     point.isOnHull = false; //Assume we're not on the hull, if we are we'll get flagged later
   }
+
+  //Set a point to the mouse
+  //if (points.length > 0) {
+  //  points[0].x = constrain(mouseX, pointMinX, pointMaxX);
+  //  points[0].y = constrain(mouseY, pointMinY, pointMaxY);
+  //}
 
   //Sort point positions by Y order, descending
   Arrays.sort(points, pVectorYDescending);
@@ -101,6 +158,11 @@ void draw() {
   for (int pointIndex : hullExtrema) {
     points[pointIndex].isOnHull = true;
   }
+}
+
+void draw() {
+  //=============UPDATE===============//
+  update();
   
   //==============DRAW================//
 
@@ -149,58 +211,40 @@ void draw() {
   midgroundFramebuffer.pushStyle();
   midgroundFramebuffer.noStroke();
 
-  PVector[] origins = new PVector[2];
-  origins[0] = leftOrigin;
-  origins[1] = rightOrigin;
-
-  PVector[][] intersections = new PVector[origins.length][hullExtrema.length];
-  for (int i = 0; i < hullExtrema.length; i++) {
-    int pointIndex = hullExtrema[i];
-    Point point = points[pointIndex];
-
-    //Determine what point the triangle should originate from
-    /*
-    PVector origin;
-    if (point.x < width / 2) {
-      origin = leftOrigin;
-    } else {
-      origin = rightOrigin;
-    }
-    */
-    for (int j = 0; j < origins.length; j++) {
-      PVector origin = origins[j];
-
-      //Cast a ray from that point to the target
-      Ray ray = new Ray();
-      ray.setOrigin(origin);
-      ray.setDirection(PVector.sub(point, origin));
-      PVector intersection = new PVector();
-      MutableFloat distance = new MutableFloat(0);
-      boolean hit = qMath.RayCast(ray, myHullRegion, Float.MAX_VALUE, distance, intersection, null/*PVector normal*/);
-      //println("ray: " + ray + " hit: " + hit + " dist: " + distance + " intersection: " + intersection);
-      //stroke(0, 255, 0);
-      //line(origin.x, origin.y, point.x, point.y);
-      intersections[j][i] = intersection;
-    }
+  if ((millis() - lastTriangleDrawTimeMs) > triangleDrawDelayMs) {
+    lastTriangleDrawTimeMs = millis();
+    setupIntersections();
   }
 
-  for (int i = 0; i < intersections.length; i++) {
-    PVector origin = origins[i];
-    PVector[] intersectionsForOrigin  = intersections[i];
-    Arrays.sort(intersectionsForOrigin, pVectorYDescending);
-    for (int j = 0; j < (intersectionsForOrigin.length - 1); j++) {
-      PVector intersection = intersectionsForOrigin[j];
-      PVector lowerIntersection = intersectionsForOrigin[j+1];
+  if (oldIntersections != null) {
+    for (int i = 0; i < oldIntersections.length; i++) {
+      PVector origin = origins[i];
+      if (origin != null) {
+        PVector[] intersectionsForOrigin  = oldIntersections[i];
+        if (intersectionsForOrigin != null) {
+          Arrays.sort(intersectionsForOrigin, pVectorYDescending);
+          for (int j = 0; j < (intersectionsForOrigin.length - 1); j++) {
+            PVector intersection = intersectionsForOrigin[j];
+            PVector lowerIntersection = intersectionsForOrigin[j+1];
+            if ((intersection == null) || (lowerIntersection == null)) {
+              continue;
+            }
 
-      float jRGB = map(j, 0, intersectionsForOrigin.length, 0, 32);
-      float frequency = 0.3;
-      float red   = sin(frequency*jRGB + 0) * 127 + 128;
-      float green = sin(frequency*jRGB + 2) * 127 + 128;
-      float blue  = sin(frequency*jRGB + 4) * 127 + 128;
+            float jRGB = map(j, 0, intersectionsForOrigin.length, 0, 32);
+            float frequency = 0.3;
+            float red   = sin(frequency*jRGB + 0) * 127 + 128;
+            float green = sin(frequency*jRGB + 2) * 127 + 128;
+            float blue  = sin(frequency*jRGB + 4) * 127 + 128;
 
-      midgroundFramebuffer.fill(red, green, blue); 
-      midgroundFramebuffer.triangle(origin.x, origin.y, intersection.x, intersection.y, lowerIntersection.x, lowerIntersection.y);
+            midgroundFramebuffer.fill(red, green, blue); 
+            midgroundFramebuffer.triangle(origin.x, origin.y, intersection.x, intersection.y, lowerIntersection.x, lowerIntersection.y);
+          }
+        }
+        oldIntersections = Arrays.copyOf(intersections, intersections.length);
+      }
     }
+  } else {
+    oldIntersections = intersections;
   }
   midgroundFramebuffer.popStyle();
   midgroundFramebuffer.endDraw();
