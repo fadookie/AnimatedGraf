@@ -149,11 +149,7 @@ void draw() {
   noStroke();
   int _color = 0;
   for (Point point : points) {
-    if (point.isOnHull) {
-      fill(255, 0, 0);
-    } else {
-      fill(0, _color, 0);
-    }
+    fill(0, _color, 0);
     ellipse(point.x, point.y, 10, 10);
     _color += 10;
   }
