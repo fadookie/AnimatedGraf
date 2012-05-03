@@ -5,7 +5,8 @@ Delaunay myDelaunay;
 Hull myHull;
 MPolygon[] myRegions;
 MPolygon myHullRegion;
-float[][] foregroundPoints;
+int numPoints = 20;
+PVector[] points;
 float[][] myEdges;
 float pointMinX, pointMinY, pointMaxX, pointMaxY;
 
@@ -19,33 +20,46 @@ void setup() {
   
   int numPoints = 20;
   
-  foregroundPoints = new float[20][2];
+
+  points = new PVector[numPoints];
+  for (int i = 0; i < points.length; i++ ){
+    points[i] = new PVector();
+  }
   			
-  for (int i = 0; i < foregroundPoints.length; i++) {
-    foregroundPoints[i][0] = random(pointMinX, pointMaxX); //point x
-    foregroundPoints[i][1] = random(pointMinY, pointMaxY); //point y
+  for (PVector point : points) {
+    point.x = random(pointMinX, pointMaxX);
+    point.y = random(pointMinY, pointMaxY);
   }
 }
 
 void draw() {
   //Update point positions
-  for (int i = 0; i < foregroundPoints.length; i++) {
-    foregroundPoints[i][0] += random(-5, 5); //x
-    foregroundPoints[i][1] += random(-5, 5); //y
-    foregroundPoints[i][0] = constrain(foregroundPoints[i][0], pointMinX, pointMaxX); //x
-    foregroundPoints[i][1] = constrain(foregroundPoints[i][1], pointMinY, pointMaxY); //y
+  for (PVector point : points) {
+    point.x += random(-5, 5);
+    point.y += random(-5, 5);
+    point.x = constrain(point.x, pointMinX, pointMaxX);
+    point.y = constrain(point.y, pointMinY, pointMaxY);
+  }
+
+  //TODO: Y sort
+
+  float[][] floatPoints = new float[points.length][2];
+  for (int i = 0; i < points.length; i++) {
+    PVector point = points[i];
+    floatPoints[i][0] = point.x;
+    floatPoints[i][1] = point.y;
   }
 
   //Calculate voronoi diagram
-  myVoronoi = new Voronoi( foregroundPoints );
+  myVoronoi = new Voronoi( floatPoints );
   myRegions = myVoronoi.getRegions();
   
   //Calculate delaunay diagram
-  myDelaunay = new Delaunay( foregroundPoints );
+  myDelaunay = new Delaunay( floatPoints );
   myEdges = myDelaunay.getEdges();
 
   //Calculate convex hull
-  myHull = new Hull( foregroundPoints ); 
+  myHull = new Hull( floatPoints ); 
   myHullRegion = myHull.getRegion();
   
   //==============DRAW================
@@ -98,8 +112,8 @@ void draw() {
 
   //Draw origin points
   /*
-  for (int i = 0; i < foregroundPoints.length; i++) {
-    float[] pointRow = foregroundPoints[i];
+  for (int i = 0; i < floatPoints.length; i++) {
+    float[] pointRow = floatPoints[i];
     for (int j = 0; j < pointRow.length; j++) {
       ellipse(pointRow[0], pointRow[1], 5, 5);
     }
