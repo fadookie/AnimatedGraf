@@ -2,7 +2,9 @@ import megamu.mesh.*;
 
 Voronoi myVoronoi;
 Delaunay myDelaunay;
+Hull myHull;
 MPolygon[] myRegions;
+MPolygon myHullRegion;
 float[][] points;
 float[][] myEdges;
 
@@ -22,8 +24,10 @@ void setup() {
 void draw() {
   //Update point positions
   for (int i = 0; i < points.length; i++) {
-    points[i][0] += random(-5, 5); //point x
-    points[i][1] += random(-5, 5); //point y
+    points[i][0] += random(-5, 5); //x
+    points[i][1] += random(-5, 5); //y
+    points[i][0] = constrain(points[i][0], 0, width); //x
+    points[i][1] = constrain(points[i][1], 0, height); //y
   }
 
   //Calculate voronoi diagram
@@ -34,6 +38,9 @@ void draw() {
   myDelaunay = new Delaunay( points );
   myEdges = myDelaunay.getEdges();
 
+  //Calculate convex hull
+  myHull = new Hull( points ); 
+  myHullRegion = myHull.getRegion();
 
   //Draw voronoi regions
   for(int i=0; i<myRegions.length; i++)
@@ -59,8 +66,13 @@ void draw() {
   	line( startX, startY, endX, endY );
   }
   
-  //Draw origin points
   stroke(color(255, 0, 0));
+
+  //Draw convex hull
+  noFill();
+  myHullRegion.draw(this);
+
+  //Draw origin points
   for (int i = 0; i < points.length; i++) {
     float[] pointRow = points[i];
     for (int j = 0; j < pointRow.length; j++) {
