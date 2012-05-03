@@ -1,5 +1,6 @@
 import megamu.mesh.*;
 
+int screenshotCount = 0; //Screenshots taken this session
 int numPoints = 20; //Number of source points
 float pointMinX, pointMinY, pointMaxX, pointMaxY; //Area in which source points can spawn and move
 Point[] points; //Data structure containing source points for all graphs
@@ -30,7 +31,7 @@ PGraphics midgroundFramebuffer;
 PGraphics foregroundFramebuffer;
 
 void setup() {
-  size(1024, 800, OPENGL);
+  size(1024, 768, OPENGL);
 
   pointMinX = width / 4;
   pointMinY = height / 4;
@@ -319,4 +320,19 @@ void draw() {
 
   //Finally, draw the foregroundFramebuffer to our native OPENGL PGraphics
   image(foregroundFramebuffer, 0, 0);
+}
+
+void keyPressed() {
+  if (CODED == key) {
+  } else {
+    if (key == 's') {
+      try {
+        saveFrame(String.format("screenshot%02d.png", screenshotCount));
+        println("screenshot " + screenshotCount);
+        screenshotCount++;
+      } 
+      catch (Exception e) {
+      }
+    }
+  }
 }
