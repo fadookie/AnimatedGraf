@@ -92,8 +92,9 @@ void draw() {
   //==============DRAW================
   voronoiFramebuffer.beginDraw();
 
-  background(color(0, 128, 255));
-  voronoiFramebuffer.background(color(0, 128, 255));
+  color backgroundColor = color(0, 128, 255);
+  background(backgroundColor);
+  voronoiFramebuffer.background(backgroundColor);
 
   //Draw delaunay edges
   voronoiFramebuffer.pushStyle();
@@ -127,9 +128,10 @@ void draw() {
   voronoiFramebuffer.popStyle();
   voronoiFramebuffer.endDraw();
 
-  stroke(color(255, 0, 0));
-
   //Draw convex hull texture from voronoi diagram framebuffer
+  pushStyle();
+  noStroke();
+  noFill();
   beginShape();
   texture(voronoiFramebuffer);
   float[][] hullCoords = myHullRegion.getCoords();
@@ -137,21 +139,15 @@ void draw() {
     vertex(hullCoords[i][0], hullCoords[i][1], hullCoords[i][0], hullCoords[i][1]);
   }
   endShape();
-
-  //Draw convex hull outline
-  pushStyle();
-  noFill();
-  strokeWeight(16);
-  stroke(color(0, 0, 0));
-  myHullRegion.draw(this);
-  strokeWeight(8);
-  stroke(color(255, 255, 255));
-  myHullRegion.draw(this);
   popStyle();
 
+  foregroundFramebuffer.beginDraw();
+  foregroundFramebuffer.background(0,0); //Refresh this buffer with pure 0% alpha
+  foregroundFramebuffer.stroke(color(255, 0, 0));
+
   //Draw side triangles
-  pushStyle();
-  strokeWeight(4);
+  foregroundFramebuffer.pushStyle();
+  foregroundFramebuffer.strokeWeight(4);
   for (int pointIndex : hullExtrema) {
     Point point = points[pointIndex];
 
@@ -180,18 +176,33 @@ void draw() {
       println("ray: " + ray + " hit: " + hit + " dist: " + distance + " intersection: " + intersection);
       //stroke(0, 255, 0);
       //line(origin.x, origin.y, point.x, point.y);
-      strokeWeight(2);
+      foregroundFramebuffer.strokeWeight(2);
       if(hit) {
-        stroke(255, 0, 0);
+        foregroundFramebuffer.stroke(255, 0, 0);
       } else {
-        stroke(0, 0, 255);
+        foregroundFramebuffer.stroke(0, 0, 255);
       }
-      line(ray.origin.x, ray.origin.y, intersection.x, intersection.y);
+      foregroundFramebuffer.line(ray.origin.x, ray.origin.y, intersection.x, intersection.y);
     }
   }
-  popStyle();
+  foregroundFramebuffer.popStyle();
+
+  //Draw convex hull outline
+  foregroundFramebuffer.pushStyle();
+  foregroundFramebuffer.noFill();
+  foregroundFramebuffer.strokeWeight(16);
+  foregroundFramebuffer.stroke(color(0, 0, 0));
+  myHullRegion.draw(foregroundFramebuffer);
+  foregroundFramebuffer.strokeWeight(8);
+  foregroundFramebuffer.stroke(color(255, 255, 255));
+  myHullRegion.draw(foregroundFramebuffer);
+  foregroundFramebuffer.popStyle();
+
+  foregroundFramebuffer.endDraw();
+
 
   //Draw origin points
+  /*
   pushStyle();
   noStroke();
   int _color = 0;
@@ -201,4 +212,7 @@ void draw() {
     _color += 10;
   }
   popStyle();
+  */
+
+  image(foregroundFramebuffer, 0, 0);
 }
