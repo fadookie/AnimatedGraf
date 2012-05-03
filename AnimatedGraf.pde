@@ -3,13 +3,14 @@ import megamu.mesh.*;
 int numPoints = 20; //Number of source points
 float pointMinX, pointMinY, pointMaxX, pointMaxY; //Area in which source points can spawn and move
 Point[] points; //Data structure containing source points for all graphs
+Point[] sortedPoints; //Data structure containing source points for all graphs, sorted by Y height
 float[][] floatPoints; //Data structure containing source points for all graphs in expected format by mesh lib
 
 PVector[] origins; //The points on the screen that will serve as origins for the side triangles
 PVector[][] intersections; //Where the rays cast from the origins to the hull points intersecting with the hull, indexed by origin
 PVector[][] oldIntersections; //The previous intersections array
 float lastTriangleDrawTimeMs;
-float triangleDrawDelayMs = 100;
+float triangleDrawDelayMs = 25;
 
 Voronoi myVoronoi;
 Delaunay myDelaunay;
@@ -117,26 +118,31 @@ void setupIntersections() {
 
 void update() {
   //Update point positions
-  for (Point point : points) {
-    point.x += random(-5, 5);
-    point.y += random(-5, 5);
-    point.x = constrain(point.x, pointMinX, pointMaxX);
-    point.y = constrain(point.y, pointMinY, pointMaxY);
+  for (int i = 0; i < points.length; i++) {
+    Point point = points[i];
+    if (
+        i == points.length - 1
+        //false
+        ) {
+      //Set a point to the mouse
+      point.x = mouseX;//constrain(mouseX, pointMinX, pointMaxX);
+      point.y = mouseY;//constrain(mouseY, pointMinY, pointMaxY);
+    } else {
+      point.x += random(-5, 5);
+      point.y += random(-5, 5);
+      point.x = constrain(point.x, pointMinX, pointMaxX);
+      point.y = constrain(point.y, pointMinY, pointMaxY);
+    }
     point.isOnHull = false; //Assume we're not on the hull, if we are we'll get flagged later
   }
 
-  //Set a point to the mouse
-  //if (points.length > 0) {
-  //  points[0].x = constrain(mouseX, pointMinX, pointMaxX);
-  //  points[0].y = constrain(mouseY, pointMinY, pointMaxY);
-  //}
-
   //Sort point positions by Y order, descending
-  Arrays.sort(points, pVectorYDescending);
+  sortedPoints = Arrays.copyOf(points, points.length);
+  Arrays.sort(sortedPoints, pVectorYDescending);
 
   //Copy points data structure to floatPoints array for use by mesh library
-  for (int i = 0; i < points.length; i++) {
-    Point point = points[i];
+  for (int i = 0; i < sortedPoints.length; i++) {
+    Point point = sortedPoints[i];
     floatPoints[i][0] = point.x;
     floatPoints[i][1] = point.y;
   }
@@ -286,15 +292,24 @@ void draw() {
   myHullRegion.draw(foregroundFramebuffer);
   foregroundFramebuffer.popStyle();
 
+  //Draw mouse cursor dot
+  foregroundFramebuffer.pushStyle();
+  foregroundFramebuffer.noStroke();
+  foregroundFramebuffer.fill(255, 172, 47);
+  foregroundFramebuffer.ellipse(mouseX, mouseY, 10, 10);
+  foregroundFramebuffer.popStyle();
+
   foregroundFramebuffer.endDraw();
 
+
+  //========== OPENGL draw ===========//
 
   //Draw origin points
   /*
   pushStyle();
   noStroke();
   int _color = 0;
-  for (Point point : points) {
+  for (Point point : sortedPoints) {
     fill(0, _color, 0);
     ellipse(point.x, point.y, 10, 10);
     _color += 10;
@@ -302,8 +317,6 @@ void draw() {
   popStyle();
   */
 
-
-  //========== OPENGL draw ===========//
   //Finally, draw the foregroundFramebuffer to our native OPENGL PGraphics
   image(foregroundFramebuffer, 0, 0);
 }
