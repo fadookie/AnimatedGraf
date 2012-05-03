@@ -92,13 +92,12 @@ void draw() {
   //==============DRAW================
   voronoiFramebuffer.beginDraw();
 
-  color backgroundColor = color(0, 128, 255);
-  background(backgroundColor);
-  voronoiFramebuffer.background(backgroundColor);
+  background(60);
+  voronoiFramebuffer.background(0, 128, 255);
 
   //Draw delaunay edges
   voronoiFramebuffer.pushStyle();
-  voronoiFramebuffer.stroke(color(32, 68, 95));
+  voronoiFramebuffer.stroke(32, 68, 95);
   voronoiFramebuffer.strokeWeight(8);
 
   for(int i=0; i<myEdges.length; i++)
@@ -119,16 +118,16 @@ void draw() {
   	// an array of points
   	float[][] regionCoordinates = myRegions[i].getCoords();
     voronoiFramebuffer.strokeWeight(16);
-    voronoiFramebuffer.stroke(color(0, 0, 0));
+    voronoiFramebuffer.stroke(0, 0, 0);
   	myRegions[i].draw(voronoiFramebuffer); // draw this shape
     voronoiFramebuffer.strokeWeight(8);
-    voronoiFramebuffer.stroke(color(255, 255, 255));
+    voronoiFramebuffer.stroke(255, 255, 255);
   	myRegions[i].draw(voronoiFramebuffer); // draw this shape
   }
   voronoiFramebuffer.popStyle();
   voronoiFramebuffer.endDraw();
 
-  //Draw convex hull texture from voronoi diagram framebuffer
+  //Draw convex hull texture from voronoi diagram framebuffer via OPENGL
   pushStyle();
   noStroke();
   noFill();
@@ -142,8 +141,9 @@ void draw() {
   popStyle();
 
   foregroundFramebuffer.beginDraw();
+
   foregroundFramebuffer.background(0,0); //Refresh this buffer with pure 0% alpha
-  foregroundFramebuffer.stroke(color(255, 0, 0));
+  foregroundFramebuffer.stroke(255, 0, 0);
 
   //Draw side triangles
   foregroundFramebuffer.pushStyle();
@@ -191,10 +191,10 @@ void draw() {
   foregroundFramebuffer.pushStyle();
   foregroundFramebuffer.noFill();
   foregroundFramebuffer.strokeWeight(16);
-  foregroundFramebuffer.stroke(color(0, 0, 0));
+  foregroundFramebuffer.stroke(0, 0, 0);
   myHullRegion.draw(foregroundFramebuffer);
   foregroundFramebuffer.strokeWeight(8);
-  foregroundFramebuffer.stroke(color(255, 255, 255));
+  foregroundFramebuffer.stroke(255, 255, 255);
   myHullRegion.draw(foregroundFramebuffer);
   foregroundFramebuffer.popStyle();
 
