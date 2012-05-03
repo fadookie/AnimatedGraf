@@ -5,7 +5,7 @@ Delaunay myDelaunay;
 Hull myHull;
 MPolygon[] myRegions;
 MPolygon myHullRegion;
-float[][] points;
+float[][] foregroundPoints;
 float[][] myEdges;
 
 void setup() {
@@ -13,43 +13,49 @@ void setup() {
   
   int numPoints = 20;
   
-  points = new float[20][2];
+  foregroundPoints = new float[20][2];
   			
-  for (int i = 0; i < points.length; i++) {
-    points[i][0] = random(0, width); //point x
-    points[i][1] = random(0, height); //point y
+  for (int i = 0; i < foregroundPoints.length; i++) {
+    foregroundPoints[i][0] = random(0, width); //point x
+    foregroundPoints[i][1] = random(0, height); //point y
   }
 }
 
 void draw() {
   //Update point positions
-  for (int i = 0; i < points.length; i++) {
-    points[i][0] += random(-5, 5); //x
-    points[i][1] += random(-5, 5); //y
-    points[i][0] = constrain(points[i][0], 0, width); //x
-    points[i][1] = constrain(points[i][1], 0, height); //y
+  for (int i = 0; i < foregroundPoints.length; i++) {
+    foregroundPoints[i][0] += random(-5, 5); //x
+    foregroundPoints[i][1] += random(-5, 5); //y
+    foregroundPoints[i][0] = constrain(foregroundPoints[i][0], 0, width); //x
+    foregroundPoints[i][1] = constrain(foregroundPoints[i][1], 0, height); //y
   }
 
   //Calculate voronoi diagram
-  myVoronoi = new Voronoi( points );
+  myVoronoi = new Voronoi( foregroundPoints );
   myRegions = myVoronoi.getRegions();
   
   //Calculate delaunay diagram
-  myDelaunay = new Delaunay( points );
+  myDelaunay = new Delaunay( foregroundPoints );
   myEdges = myDelaunay.getEdges();
 
   //Calculate convex hull
-  myHull = new Hull( points ); 
+  myHull = new Hull( foregroundPoints ); 
   myHullRegion = myHull.getRegion();
 
+
+  background(color(0, 128, 255));
+
   //Draw voronoi regions
+  noFill();
   for(int i=0; i<myRegions.length; i++)
   {
   	// an array of points
   	float[][] regionCoordinates = myRegions[i].getCoords();
-  	
-    stroke(color(0, 0, 255));
-  	fill(30);
+    strokeWeight(16);
+    stroke(color(0, 0, 0));
+  	myRegions[i].draw(this); // draw this shape
+    strokeWeight(8);
+    stroke(color(255, 255, 255));
   	myRegions[i].draw(this); // draw this shape
   }
   
@@ -57,6 +63,7 @@ void draw() {
   strokeWeight(2);
   
   //Draw delaunay edges
+  /*
   for(int i=0; i<myEdges.length; i++)
   {
   	float startX = myEdges[i][0];
@@ -65,6 +72,7 @@ void draw() {
   	float endY = myEdges[i][3];
   	line( startX, startY, endX, endY );
   }
+  */
   
   stroke(color(255, 0, 0));
 
@@ -73,8 +81,8 @@ void draw() {
   myHullRegion.draw(this);
 
   //Draw origin points
-  for (int i = 0; i < points.length; i++) {
-    float[] pointRow = points[i];
+  for (int i = 0; i < foregroundPoints.length; i++) {
+    float[] pointRow = foregroundPoints[i];
     for (int j = 0; j < pointRow.length; j++) {
       ellipse(pointRow[0], pointRow[1], 5, 5);
     }
