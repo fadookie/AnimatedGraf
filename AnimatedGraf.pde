@@ -41,6 +41,8 @@ void setup() {
   floatPoints = new float[points.length][2];
   pVectorYDescending = new PVectorYDescending();
   qMath = new QMath();
+
+  //frameRate(30);
 }
 
 void draw() {
@@ -137,33 +139,39 @@ void draw() {
     Point point = points[pointIndex];
 
     //Determine what point the triangle should originate from
+    /*
     PVector origin;
     if (point.x < width / 2) {
       origin = leftOrigin;
     } else {
       origin = rightOrigin;
     }
+    */
 
-    //Cast a ray from that point to the target
-    Ray ray = new Ray();
-    ray.setOrigin(origin);
-    ray.setDirection(PVector.sub(point, origin));
-    PVector intersection = new PVector();
-    MutableFloat distance = new MutableFloat(0);
-    boolean hit = qMath.RayCast(ray, myHullRegion, Float.MAX_VALUE, distance, intersection, null/*PVector normal*/);
-    println("ray: " + ray + " hit: " + hit + " dist: " + distance + " intersection: " + intersection);
-    //stroke(0, 255, 0);
-    //line(origin.x, origin.y, point.x, point.y);
-    strokeWeight(2);
-    if(hit) {
-      stroke(255, 0, 0);
-    } else {
-      stroke(0, 0, 255);
+    PVector[] origins = new PVector[2];
+    origins[0] = leftOrigin;
+    origins[1] = rightOrigin;
+
+    for (PVector origin : origins) {
+
+      //Cast a ray from that point to the target
+      Ray ray = new Ray();
+      ray.setOrigin(origin);
+      ray.setDirection(PVector.sub(point, origin));
+      PVector intersection = new PVector();
+      MutableFloat distance = new MutableFloat(0);
+      boolean hit = qMath.RayCast(ray, myHullRegion, Float.MAX_VALUE, distance, intersection, null/*PVector normal*/);
+      println("ray: " + ray + " hit: " + hit + " dist: " + distance + " intersection: " + intersection);
+      //stroke(0, 255, 0);
+      //line(origin.x, origin.y, point.x, point.y);
+      strokeWeight(2);
+      if(hit) {
+        stroke(255, 0, 0);
+      } else {
+        stroke(0, 0, 255);
+      }
+      line(ray.origin.x, ray.origin.y, intersection.x, intersection.y);
     }
-    pushMatrix();
-    translate(ray.origin.x, ray.origin.y);
-    line(0, 0, ray.direction.x * 500, ray.direction.y * 500);
-    popMatrix();
   }
   popStyle();
 
