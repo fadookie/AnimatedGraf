@@ -7,6 +7,7 @@ MPolygon[] myRegions;
 MPolygon myHullRegion;
 int numPoints = 20;
 PVector[] points;
+float[][] floatPoints;
 float[][] myEdges;
 float pointMinX, pointMinY, pointMaxX, pointMaxY;
 
@@ -23,13 +24,13 @@ void setup() {
 
   points = new PVector[numPoints];
   for (int i = 0; i < points.length; i++ ){
-    points[i] = new PVector();
+    points[i] = new PVector(
+        random(pointMinX, pointMaxX),
+        random(pointMinY, pointMaxY)
+    );
   }
-  			
-  for (PVector point : points) {
-    point.x = random(pointMinX, pointMaxX);
-    point.y = random(pointMinY, pointMaxY);
-  }
+
+  floatPoints = new float[points.length][2];
 }
 
 void draw() {
@@ -43,7 +44,7 @@ void draw() {
 
   //TODO: Y sort
 
-  float[][] floatPoints = new float[points.length][2];
+  //Copy points data structure to floatPoints array for use by mesh library
   for (int i = 0; i < points.length; i++) {
     PVector point = points[i];
     floatPoints[i][0] = point.x;
