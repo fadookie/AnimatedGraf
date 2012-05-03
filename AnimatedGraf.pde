@@ -41,11 +41,28 @@ void draw() {
   //Calculate convex hull
   myHull = new Hull( foregroundPoints ); 
   myHullRegion = myHull.getRegion();
-
+  
+  //==============DRAW================
 
   background(color(0, 128, 255));
 
+  //Draw delaunay edges
+  pushStyle();
+  stroke(color(32, 68, 95));
+  strokeWeight(8);
+
+  for(int i=0; i<myEdges.length; i++)
+  {
+  	float startX = myEdges[i][0];
+  	float startY = myEdges[i][1];
+  	float endX = myEdges[i][2];
+  	float endY = myEdges[i][3];
+  	line( startX, startY, endX, endY );
+  }
+  popStyle();
+
   //Draw voronoi regions
+  pushStyle();
   noFill();
   for(int i=0; i<myRegions.length; i++)
   {
@@ -58,33 +75,28 @@ void draw() {
     stroke(color(255, 255, 255));
   	myRegions[i].draw(this); // draw this shape
   }
-  
-  stroke(color(0, 255, 0));
-  strokeWeight(2);
-  
-  //Draw delaunay edges
-  /*
-  for(int i=0; i<myEdges.length; i++)
-  {
-  	float startX = myEdges[i][0];
-  	float startY = myEdges[i][1];
-  	float endX = myEdges[i][2];
-  	float endY = myEdges[i][3];
-  	line( startX, startY, endX, endY );
-  }
-  */
-  
+  popStyle();
+
   stroke(color(255, 0, 0));
 
   //Draw convex hull
+  pushStyle();
   noFill();
+  strokeWeight(16);
+  stroke(color(0, 0, 0));
   myHullRegion.draw(this);
+  strokeWeight(8);
+  stroke(color(255, 255, 255));
+  myHullRegion.draw(this);
+  popStyle();
 
   //Draw origin points
+  /*
   for (int i = 0; i < foregroundPoints.length; i++) {
     float[] pointRow = foregroundPoints[i];
     for (int j = 0; j < pointRow.length; j++) {
       ellipse(pointRow[0], pointRow[1], 5, 5);
     }
   }
+  */
 }
